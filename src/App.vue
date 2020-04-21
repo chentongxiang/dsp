@@ -3,9 +3,11 @@
     <router-view />
   </div>
 </template>
-<style lang="less">
-#app{
-  width:100%;
-  height:100%;
+<style lang="less" scoped>
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
 }
 </style>

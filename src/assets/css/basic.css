@@ -20,11 +20,20 @@ li {
     list-style: none;
 }
 
-html,body{
+html{
     margin:0px;
     width:100%;
     height:100%; 
     /* border:1px solid red; */
+}
+body{
+    margin:0px;
+    width:100%;
+    height:100%; 
+    /* border:1px solid red; */
+}
+.el-form-item__label {
+    color: #fff !important;
 }
 /* html {
     width: 100%;
