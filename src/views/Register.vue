@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 <template>
   <div class="box">
     <div class="header">
@@ -11,6 +12,7 @@
       label-width="80px"
       :model="formLabelAlign"
       :rules="rules"
+      ref="formLabelAlign"
       class="form-box"
     >
       <div class="title">个人信息</div>
@@ -26,7 +28,7 @@
         <div class="info-right">
           <div class="radio-box" prop="radio">
             <el-radio v-model="formLabelAlign.radio" label="1">男</el-radio>
-            <el-radio v-model="formLabelAlign.radio" label="2">女</el-radio>
+            <el-radio v-model="formLabelAlign.radio" label="0">女</el-radio>
           </div>
           <el-form-item label="职务" class="duty" prop="duty">
             <el-input v-model="formLabelAlign.duty"></el-input>
@@ -54,12 +56,20 @@
         </div>
       </div>
       <div class="button-box">
-        <el-button type="primary" class="reg-button">注册</el-button>
+        <el-button
+          type="primary"
+          class="reg-button"
+          @click="submitForm('formLabelAlign')"
+          >注册</el-button
+        >
       </div>
     </el-form>
   </div>
 </template>
 <script>
+import axios from "axios";
+import Qs from "qs";
+
 export default {
   data() {
     var checkNumber = (rule, value, callback) => {
@@ -69,6 +79,22 @@ export default {
       } else {
         if (!/^1[345678]\d{9}$/.test(value)) {
           callback(new Error("请输入正确的手机号"));
+          this.disabled = true;
+        } else {
+          callback();
+          setTimeout(() => {
+            this.disabled = false;
+          }, 500);
+        }
+      }
+    };
+    var checkName = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("姓名不能为空"));
+        this.disabled = true;
+      } else {
+        if (!/^[\u4e00-\u9fa5]+$/i.test(value)) {
+          callback(new Error("姓名只能是纯汉字"));
           this.disabled = true;
         } else {
           callback();
@@ -92,15 +118,33 @@ export default {
       rules: {
         name: [
           { required: true, message: "请输入姓名", trigger: "blur" },
-          { min: 3, max: 10, message: "长度在 3 到 10 个字符", trigger: "blur" }
+          {
+            min: 3,
+            max: 10,
+            message: "长度在 3 到 10 个字符",
+            trigger: "blur"
+          },
+          { validator: checkName, trigger: "blur" }
         ],
         company: [
           { required: true, message: "请输入公司名称", trigger: "blur" },
-          { min: 3, max: 20, message: "长度在 3 到 20 个字符", trigger: "blur" }
+          {
+            min: 3,
+            max: 20,
+            message: "长度在 3 到 20 个字符",
+            trigger: "blur"
+          },
+          { validator: checkName, trigger: "blur" }
         ],
         duty: [
           { required: true, message: "请输入您在公司的职务", trigger: "blur" },
-          { min: 3, max: 20, message: "长度在 3 到 20 个字符", trigger: "blur" }
+          {
+            min: 3,
+            max: 20,
+            message: "长度在 3 到 20 个字符",
+            trigger: "blur"
+          },
+          { validator: checkName, trigger: "blur" }
         ],
         phone: [
           // { required: true, message: "请输入您在公司的职务", trigger: "blur" },
@@ -119,26 +163,62 @@ export default {
       this.$router.push("/login");
     },
     validateBtn() {
-      let time = 5;
-      let timer = setInterval(() => {
-        if (time == 0) {
-          clearInterval(timer);
-          this.disabled = false;
-          this.btnTitle = "获取验证码";
-        } else {
-          this.btnTitle = time + "秒后重试";
-          this.disabled = true;
-          time--;
-        }
-      }, 1000);
+      this.disabled = true;
+      let data = {
+        mobile: this.formLabelAlign.phone
+      };
+      axios
+        .post(this.REAURL.getCodeUrl, Qs.stringify(data), {})
+        .then(res => {
+          console.log(res);
+          let data = res.data;
+          if (data.code == 1) {
+            let time = 5;
+            let timer = setInterval(() => {
+              if (time == 0) {
+                clearInterval(timer);
+                this.disabled = false;
+                this.btnTitle = "获取验证码";
+              } else {
+                this.btnTitle = time + "秒后重试";
+                this.disabled = true;
+                time--;
+              }
+            }, 1000);
+          } else if (data.code == 0) {
+            alert(data.msg);
+            this.disabled = false;
+          }
+        })
+        .catch(res => {
+          if (res) {
+            alert("网页出错，请稍后再试");
+          }
+        });
     },
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          alert("submit!");
-        } else {
-          console.log("error submit!!");
-          return false;
+          let data = {
+            contacts: this.formLabelAlign.name,
+            company_name: this.formLabelAlign.company,
+            position: this.formLabelAlign.duty,
+            gender: parseInt(this.formLabelAlign.radio),
+            mobile: this.formLabelAlign.phone,
+            code: this.formLabelAlign.code
+          };
+          console.log(this.REAURL.register);
+          axios.post(this.REAURL.register, Qs.stringify(data), {}).then(res => {
+            let data = res.data;
+            if (data.code == 1) {
+              alert("注册成功!3秒后跳转到登录页。");
+              setTimeout(() => {
+                this.$router.push("/login");
+              }, 3000);
+            } else {
+              alert(data.msg);
+            }
+          });
         }
       });
     },

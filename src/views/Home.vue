@@ -37,10 +37,7 @@ export default {
 .box {
   width:100%;
   height:100%;
-  background-image: url("../assets/image/login_bg.png");
-  background-repeat: no-repeat;
-  background-size: 100% 100%;
-  background-position: center;
+  
   .top {
     width: 100%;
     height: 60px;

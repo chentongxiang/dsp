@@ -19,7 +19,7 @@
           class="code-text"
           @click="validatePhone()"
           :disabled="disabled"
-          >{{ codePlaceholder }}</el-button
+          >{{ btnTitle }}</el-button
         >
       </div>
       <div class="middle">
@@ -46,6 +46,7 @@
   </div>
 </template>
 <script>
+import Qs from "qs";
 export default {
   name: "Login",
   data() {
@@ -54,11 +55,12 @@ export default {
       codeTip: "",
       phone: "",
       code: "",
-      codePlaceholder: "获取验证码",
+      btnTitle: "获取验证码",
       disabled: false
     };
   },
   methods: {
+    //点击登录
     submitClick() {
       console.log(this.phone);
       // 表单验证
@@ -71,6 +73,23 @@ export default {
       } else {
         this.phoneTip = "";
         this.codeTip = "";
+        let data = {
+          mobile: this.phone,
+          code: parseInt(this.code)
+        };
+        this.$http
+          .post(this.REAURL.mobileLogin, Qs.stringify(data), {})
+          .then(res => {
+            let data = res.data;
+            if (data.code == 1) {
+              alert("登录成功!");
+              // setTimeout(() => {
+              // }, 3000);
+              this.$router.push("/index");
+            } else {
+              alert(data.msg);
+            }
+          });
       }
     },
     validatePhone() {
@@ -88,19 +107,37 @@ export default {
       }
     },
     validateBtn() {
+      this.disabled = true;
       //倒计时
-      let time = 5;
-      let timer = setInterval(() => {
-        if (time == 0) {
-          clearInterval(timer);
-          this.disabled = false;
-          this.codePlaceholder = "获取验证码";
-        } else {
-          this.codePlaceholder = time + "秒后重试";
-          this.disabled = true;
-          time--;
-        }
-      }, 1000);
+      let data = {
+        mobile: this.phone,
+        event: "mobilelogin" //登录事件
+      };
+      (() => {
+        let time = 10;
+        let timer = setInterval(() => {
+          if (time == 0) {
+            clearInterval(timer);
+            this.disabled = false;
+            this.btnTitle = "获取验证码";
+          } else {
+            this.btnTitle = time + "秒后重试";
+            this.disabled = true;
+            time--;
+          }
+        }, 1000);
+      })();
+      this.$http
+        .post(this.REAURL.getCodeUrl, Qs.stringify(data), {})
+        .then(res => {
+          let data = res.data;
+          if (data.code == 1) {
+            console.log(1423);
+          } else {
+            alert(data.msg);
+            this.disabled = false;
+          }
+        });
     }
   }
 };
